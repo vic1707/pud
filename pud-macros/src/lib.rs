@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![no_std]
+extern crate alloc;
+mod utils;
 
 #[proc_macro_attribute]
 pub fn pud(
