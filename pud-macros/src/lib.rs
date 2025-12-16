@@ -26,14 +26,15 @@ fn expand(
 	args: ::proc_macro::TokenStream,
 	item: ::proc_macro::TokenStream,
 ) -> ::syn::Result<::proc_macro2::TokenStream> {
-	let original_declaration: ::proc_macro2::TokenStream = item.clone().into();
+	let item: ::syn::ItemStruct = ::syn::parse(item)?;
+	let item_copy = stripped_pud_field_attrs(item.clone());
 	let ::syn::ItemStruct {
 		fields,
 		vis,
 		ident,
 		generics,
 		..
-	} = ::syn::parse(item)?;
+	} = item;
 
 	let args = Arguments::from(
 		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
@@ -54,7 +55,7 @@ fn expand(
 	let match_arms = fields_and_types.iter().map(Field::match_arm_update);
 
 	Ok(::quote::quote! {
-		#original_declaration
+		#item_copy
 
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*
@@ -70,4 +71,11 @@ fn expand(
 			}
 		}
 	})
+}
+
+fn stripped_pud_field_attrs(mut item: ::syn::ItemStruct) -> ::syn::ItemStruct {
+	for field in item.fields.iter_mut() {
+		field.attrs.retain(|attr| !attr.path().is_ident("pud"));
+	}
+	item
 }
