@@ -60,7 +60,9 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 		for attr in attrs {
 			if attr.path().is_ident("pud") {
 				for arg in parse_pud_attr.parse2(attr.meta.to_token_stream())? {
-					match arg {}
+					match arg {
+						Argument::Rename(new_name) => args.rename = Some(new_name),
+					}
 				}
 			}
 		}
@@ -69,7 +71,9 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 	}
 }
 
-pub(crate) enum Argument {}
+pub(crate) enum Argument {
+	Rename(::syn::Ident),
+}
 
 impl ::syn::parse::Parse for Argument {
 	fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
@@ -77,6 +81,11 @@ impl ::syn::parse::Parse for Argument {
 
 		let ident = input.parse::<::syn::Ident>()?;
 		let arg = match ident.to_string().as_str() {
+			"rename" => {
+				input.parse::<::syn::Token![=]>()?;
+				let new_name = input.parse::<::syn::Ident>()?;
+				Self::Rename(new_name)
+			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};
 		Ok(arg)
