@@ -38,7 +38,9 @@ fn expand(
 			.parse(args)?,
 	);
 
-	let enum_name = ::quote::format_ident!("{}Pud", ident);
+	let enum_name = args
+		.rename
+		.unwrap_or(::quote::format_ident!("{}Pud", ident));
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	let fields_and_types = fields
