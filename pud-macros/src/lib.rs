@@ -3,9 +3,11 @@
 extern crate alloc;
 
 mod arguments;
+mod field;
 mod utils;
 use crate::{
 	arguments::{Argument, Arguments},
+	field::Field,
 	utils::syn_ident_to_pascal_case,
 };
 use ::syn::parse::Parser as _;
@@ -45,12 +47,11 @@ fn expand(
 
 	let fields_and_types = fields
 		.into_iter()
-		.map(|::syn::Field { ident, ty, .. }| (ident, ty))
-		.map(|(ident, ty)| PudField::new(ident.expect("Expected named field"), ty))
-		.collect::<::alloc::vec::Vec<_>>();
+		.map(Field::try_from)
+		.collect::<::syn::Result<::alloc::vec::Vec<_>>>()?;
 
-	let variants = fields_and_types.iter().map(PudField::to_variant);
-	let match_arms = fields_and_types.iter().map(PudField::match_arm_update);
+	let variants = fields_and_types.iter().map(Field::to_variant);
+	let match_arms = fields_and_types.iter().map(Field::match_arm_update);
 
 	Ok(::quote::quote! {
 		#original_declaration
@@ -69,36 +70,4 @@ fn expand(
 			}
 		}
 	})
-}
-
-struct PudField {
-	ident: ::syn::Ident,
-	variant_ident: ::syn::Ident,
-	ty: ::syn::Type,
-}
-
-impl PudField {
-	fn new(ident: ::syn::Ident, ty: ::syn::Type) -> Self {
-		Self {
-			variant_ident: syn_ident_to_pascal_case(&ident),
-			ident,
-			ty,
-		}
-	}
-
-	fn to_variant(&self) -> ::syn::Variant {
-		let Self {
-			variant_ident, ty, ..
-		} = self;
-		::syn::parse_quote! { #variant_ident ( #ty ) }
-	}
-
-	fn match_arm_update(&self) -> ::syn::Arm {
-		let Self {
-			variant_ident,
-			ident,
-			..
-		} = self;
-		::syn::parse_quote! { Self::#variant_ident ( #ident ) => {target. #ident = #ident;} }
-	}
 }
