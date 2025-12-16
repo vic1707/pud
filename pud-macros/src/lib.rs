@@ -2,8 +2,13 @@
 #![no_std]
 extern crate alloc;
 
+mod arguments;
 mod utils;
-use crate::utils::syn_ident_to_pascal_case;
+use crate::{
+	arguments::{Argument, Arguments},
+	utils::syn_ident_to_pascal_case,
+};
+use ::syn::parse::Parser as _;
 
 #[proc_macro_attribute]
 pub fn pud(
@@ -27,6 +32,11 @@ fn expand(
 		generics,
 		..
 	} = ::syn::parse(item)?;
+
+	let args = Arguments::from(
+		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
+			.parse(args)?,
+	);
 
 	let enum_name = ::quote::format_ident!("{}Pud", ident);
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
