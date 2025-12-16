@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![no_std]
 extern crate alloc;
+
 mod utils;
 use crate::utils::syn_ident_to_pascal_case;
 
@@ -30,15 +31,14 @@ fn expand(
 	let enum_name = ::quote::format_ident!("{}Pud", ident);
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	let variants = fields
+	let fields_and_types = fields
 		.into_iter()
-		.map(|::syn::Field { ident, ty, .. }| -> syn::Variant {
-			let ident = ident
-				.map(|i| syn_ident_to_pascal_case(&i))
-				.expect("Expected named field");
+		.map(|::syn::Field { ident, ty, .. }| (ident, ty))
+		.map(|(ident, ty)| PudField::new(ident.expect("Expected named field"), ty))
+		.collect::<::alloc::vec::Vec<_>>();
 
-			::syn::parse_quote! { #ident ( #ty ) }
-		});
+	let variants = fields_and_types.iter().map(PudField::to_variant);
+	let match_arms = fields_and_types.iter().map(PudField::match_arm_update);
 
 	Ok(::quote::quote! {
 		#original_declaration
@@ -46,5 +46,47 @@ fn expand(
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*
 		}
+
+		#[automatically_derived]
+		impl #impl_generics ::pud::Pud for #enum_name #ty_generics #where_clause {
+			type Target = #ident #ty_generics;
+			fn apply(self, target: &mut Self::Target) {
+				match self {
+					#( #match_arms ),*
+				}
+			}
+		}
 	})
+}
+
+struct PudField {
+	ident: ::syn::Ident,
+	variant_ident: ::syn::Ident,
+	ty: ::syn::Type,
+}
+
+impl PudField {
+	fn new(ident: ::syn::Ident, ty: ::syn::Type) -> Self {
+		Self {
+			variant_ident: syn_ident_to_pascal_case(&ident),
+			ident,
+			ty,
+		}
+	}
+
+	fn to_variant(&self) -> ::syn::Variant {
+		let Self {
+			variant_ident, ty, ..
+		} = self;
+		::syn::parse_quote! { #variant_ident ( #ty ) }
+	}
+
+	fn match_arm_update(&self) -> ::syn::Arm {
+		let Self {
+			variant_ident,
+			ident,
+			..
+		} = self;
+		::syn::parse_quote! { Self::#variant_ident ( #ident ) => {target. #ident = #ident;} }
+	}
 }
