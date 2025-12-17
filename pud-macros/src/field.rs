@@ -6,7 +6,7 @@ use ::{
 };
 
 pub(crate) struct Field {
-	pub(crate) args: Arguments,
+	args: Arguments,
 	ident: ::syn::Ident,
 	ty: ::syn::Type,
 }
@@ -25,7 +25,11 @@ impl TryFrom<::syn::Field> for Field {
 }
 
 impl Field {
-	pub(crate) fn variant_ident(&self) -> ::syn::Ident {
+	pub(crate) fn skip(&self) -> bool {
+		self.args.skip
+	}
+
+	fn variant_ident(&self) -> ::syn::Ident {
 		self.args
 			.rename
 			.clone()
@@ -50,7 +54,7 @@ impl Field {
 #[derive(Default)]
 pub(crate) struct Arguments {
 	rename: Option<::syn::Ident>,
-	pub(crate) skip: bool,
+	skip: bool,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Arguments {
