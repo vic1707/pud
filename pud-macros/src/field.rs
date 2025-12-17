@@ -7,8 +7,8 @@ use ::{
 
 pub(crate) struct Field {
 	args: Arguments,
-	ident: ::syn::Ident,
-	ty: ::syn::Type,
+	pub(crate) ident: ::syn::Ident,
+	pub(crate) ty: ::syn::Type,
 }
 
 impl TryFrom<::syn::Field> for Field {
@@ -29,6 +29,10 @@ impl Field {
 		self.args.skip
 	}
 
+	pub(crate) fn groups(&self) -> impl Iterator<Item = &::syn::Ident> {
+		self.args.groups.iter()
+	}
+
 	fn variant_ident(&self) -> ::syn::Ident {
 		self.args
 			.rename
@@ -43,11 +47,17 @@ impl Field {
 		::syn::parse_quote! { #variant_ident ( #ty ) }
 	}
 
+	pub(crate) fn assignment(&self) -> ::syn::ExprAssign {
+		let Self { ident, .. } = self;
+		::syn::parse_quote! { target. #ident = #ident }
+	}
+
 	pub(crate) fn match_arm_update(&self) -> ::syn::Arm {
 		let Self { ident, .. } = self;
 		let variant_ident = self.variant_ident();
+		let assignment = self.assignment();
 
-		::syn::parse_quote! { Self::#variant_ident ( #ident ) => {target. #ident = #ident;} }
+		::syn::parse_quote! { Self::#variant_ident ( #ident ) => { #assignment; } }
 	}
 }
 
@@ -55,6 +65,7 @@ impl Field {
 pub(crate) struct Arguments {
 	rename: Option<::syn::Ident>,
 	skip: bool,
+	groups: ::alloc::vec::Vec<::syn::Ident>,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Arguments {
@@ -69,6 +80,7 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 					match arg {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
 						Argument::Skip => args.skip = true,
+						Argument::Group(group) => args.groups.push(group),
 					}
 				}
 			}
@@ -81,6 +93,7 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 pub(crate) enum Argument {
 	Rename(::syn::Ident),
 	Skip,
+	Group(::syn::Ident),
 }
 
 impl ::syn::parse::Parse for Argument {
@@ -95,6 +108,11 @@ impl ::syn::parse::Parse for Argument {
 				Self::Rename(new_name)
 			},
 			"skip" => Self::Skip,
+			"group" => {
+				input.parse::<::syn::Token![=]>()?;
+				let group = input.parse::<::syn::Ident>()?;
+				Self::Group(group)
+			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};
 		Ok(arg)

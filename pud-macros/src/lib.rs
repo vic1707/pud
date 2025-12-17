@@ -4,10 +4,12 @@ extern crate alloc;
 
 mod arguments;
 mod field;
+mod field_group;
 mod utils;
 use crate::{
 	arguments::{Argument, Arguments},
 	field::Field,
+	field_group::FieldGroups,
 	utils::syn_ident_to_pascal_case,
 };
 use ::syn::parse::Parser as _;
@@ -55,12 +57,17 @@ fn expand(
 	let variants = fields_and_types.iter().map(Field::to_variant);
 	let match_arms = fields_and_types.iter().map(Field::match_arm_update);
 
+	let groups = FieldGroups::from_iter(&fields_and_types);
+	let groups_variants = groups.variants();
+	let groups_arms = groups.match_arms();
+
 	Ok(::quote::quote! {
 		#item_copy
 
 		#[derive( #derives )]
 		#vis enum #enum_name #impl_generics #where_clause {
-			#( #variants ),*
+			#( #variants ),*,
+			#( #groups_variants ),*,
 		}
 
 		#[automatically_derived]
@@ -69,6 +76,7 @@ fn expand(
 			fn apply(self, target: &mut Self::Target) {
 				match self {
 					#( #match_arms ),*
+					#( #groups_arms ),*
 				}
 			}
 		}
