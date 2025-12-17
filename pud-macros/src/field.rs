@@ -1,3 +1,4 @@
+// TODO: `skip` doesn't handle missing generics
 use crate::syn_ident_to_pascal_case;
 use ::{
 	quote::ToTokens as _,
@@ -5,7 +6,7 @@ use ::{
 };
 
 pub(crate) struct Field {
-	args: Arguments,
+	pub(crate) args: Arguments,
 	ident: ::syn::Ident,
 	ty: ::syn::Type,
 }
@@ -49,6 +50,7 @@ impl Field {
 #[derive(Default)]
 pub(crate) struct Arguments {
 	rename: Option<::syn::Ident>,
+	pub(crate) skip: bool,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Arguments {
@@ -62,6 +64,7 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 				for arg in parse_pud_attr.parse2(attr.meta.to_token_stream())? {
 					match arg {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
+						Argument::Skip => args.skip = true,
 					}
 				}
 			}
@@ -73,6 +76,7 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 
 pub(crate) enum Argument {
 	Rename(::syn::Ident),
+	Skip,
 }
 
 impl ::syn::parse::Parse for Argument {
@@ -86,6 +90,7 @@ impl ::syn::parse::Parse for Argument {
 				let new_name = input.parse::<::syn::Ident>()?;
 				Self::Rename(new_name)
 			},
+			"skip" => Self::Skip,
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};
 		Ok(arg)

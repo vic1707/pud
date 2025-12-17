@@ -44,10 +44,16 @@ fn expand(
 	let enum_name = rename.unwrap_or(::quote::format_ident!("{}Pud", ident));
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	let fields_and_types = fields
-		.into_iter()
-		.map(Field::try_from)
-		.collect::<::syn::Result<::alloc::vec::Vec<_>>>()?;
+	let fields_and_types =
+		fields
+			.into_iter()
+			.try_fold(::alloc::vec::Vec::new(), |mut acc, field| {
+				let field = Field::try_from(field)?;
+				if !field.args.skip {
+					acc.push(field);
+				}
+				::syn::Result::Ok(acc)
+			})?;
 
 	let variants = fields_and_types.iter().map(Field::to_variant);
 	let match_arms = fields_and_types.iter().map(Field::match_arm_update);
