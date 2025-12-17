@@ -55,7 +55,7 @@ fn expand(
 		.collect::<::syn::Result<_>>()?;
 
 	let variants = fields_and_types.iter().map(Field::to_variant);
-	let match_arms = fields_and_types.iter().map(Field::match_arm_update);
+	let match_arms = fields_and_types.iter().map(Field::match_arm);
 
 	let groups = FieldGroups::from_iter(&fields_and_types);
 	let groups_variants = groups.variants();
@@ -67,7 +67,7 @@ fn expand(
 		#[derive( #derives )]
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
-			#( #groups_variants ),*,
+			#( #groups_variants ),*
 		}
 
 		#[automatically_derived]

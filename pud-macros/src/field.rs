@@ -52,7 +52,7 @@ impl Field {
 		::syn::parse_quote! { target. #ident = #ident }
 	}
 
-	pub(crate) fn match_arm_update(&self) -> ::syn::Arm {
+	pub(crate) fn match_arm(&self) -> ::syn::Arm {
 		let Self { ident, .. } = self;
 		let variant_ident = self.variant_ident();
 		let assignment = self.assignment();
