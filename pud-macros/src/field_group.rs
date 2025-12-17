@@ -16,7 +16,7 @@ impl FieldGroups<'_> {
 
 	pub(crate) fn match_arms(&self) -> impl Iterator<Item = ::syn::Arm> {
 		self.0.iter().map(|(group_name, fields)| {
-			let fields_names = fields.iter().map(|f| &f.ident);
+			let fields_names = fields.iter().map(|f| &f.v_name);
 			let fields_assignments = fields.iter().map(|f| f.assignment());
 
 			::syn::parse_quote! { Self::#group_name ( #( #fields_names ),* ) => { #( #fields_assignments );* } }

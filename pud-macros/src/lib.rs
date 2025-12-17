@@ -48,6 +48,7 @@ fn expand(
 
 	let fields_and_types: ::alloc::vec::Vec<_> = fields
 		.into_iter()
+		.enumerate()
 		.filter_map(|f| match Field::try_from(f) {
 			Ok(f) => (!f.skip()).then_some(Ok(f)),
 			Err(e) => Some(Err(e)),

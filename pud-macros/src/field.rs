@@ -7,20 +7,30 @@ use ::{
 
 pub(crate) struct Field {
 	args: Arguments,
-	pub(crate) ident: ::syn::Ident,
+	member: ::syn::Member,
 	pub(crate) ty: ::syn::Type,
+	pub(crate) v_name: ::syn::Ident,
 }
 
-impl TryFrom<::syn::Field> for Field {
+impl TryFrom<(usize, ::syn::Field)> for Field {
 	type Error = ::syn::Error;
-	fn try_from(field: ::syn::Field) -> ::syn::Result<Self> {
-		let Some(ident) = field.ident else {
-			return Err(::syn::Error::new_spanned(field, "Expected a named field."));
-		};
-		let ::syn::Field { ty, attrs, .. } = field;
-		let args = Arguments::try_from(attrs.as_slice())?;
 
-		Ok(Self { ident, ty, args })
+	fn try_from((idx, field): (usize, ::syn::Field)) -> ::syn::Result<Self> {
+		let args = Arguments::try_from(field.attrs.as_slice())?;
+		let member = field.ident.clone().map_or(idx.into(), Into::into);
+
+		if matches!(member, ::syn::Member::Unnamed(_)) && args.rename.is_none() {
+			return Err(::syn::Error::new_spanned(
+				&field,
+				"Unnamed fields must have a `#[pud(rename = Name)]`",
+			));
+		}
+		Ok(Self {
+			args,
+			member,
+			ty: field.ty,
+			v_name: ::quote::format_ident!("_{idx}"),
+		})
 	}
 }
 
@@ -33,11 +43,13 @@ impl Field {
 		self.args.groups.iter()
 	}
 
-	fn variant_ident(&self) -> ::syn::Ident {
-		self.args
-			.rename
-			.clone()
-			.unwrap_or_else(|| syn_ident_to_pascal_case(&self.ident))
+	pub(crate) fn variant_ident(&self) -> ::syn::Ident {
+		self.args.rename.clone().unwrap_or_else(|| {
+			let ::syn::Member::Named(ref ident) = self.member else {
+				unreachable!("Checked in TryFrom");
+			};
+			syn_ident_to_pascal_case(ident)
+		})
 	}
 
 	pub(crate) fn to_variant(&self) -> ::syn::Variant {
@@ -48,16 +60,21 @@ impl Field {
 	}
 
 	pub(crate) fn assignment(&self) -> ::syn::ExprAssign {
-		let Self { ident, .. } = self;
-		::syn::parse_quote! { target. #ident = #ident }
+		let Self {
+			member,
+			v_name: name_as_var,
+			..
+		} = self;
+
+		::syn::parse_quote! { target. #member = #name_as_var }
 	}
 
 	pub(crate) fn match_arm(&self) -> ::syn::Arm {
-		let Self { ident, .. } = self;
+		let name_as_var = &self.v_name;
 		let variant_ident = self.variant_ident();
 		let assignment = self.assignment();
 
-		::syn::parse_quote! { Self::#variant_ident ( #ident ) => { #assignment; } }
+		::syn::parse_quote! { Self::#variant_ident ( #name_as_var ) => { #assignment; } }
 	}
 }
 
