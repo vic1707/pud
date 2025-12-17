@@ -36,14 +36,12 @@ fn expand(
 		..
 	} = item;
 
-	let args = Arguments::from(
+	let Arguments { rename, derives } = Arguments::from(
 		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
 			.parse(args)?,
 	);
 
-	let enum_name = args
-		.rename
-		.unwrap_or(::quote::format_ident!("{}Pud", ident));
+	let enum_name = rename.unwrap_or(::quote::format_ident!("{}Pud", ident));
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	let fields_and_types = fields
@@ -57,6 +55,7 @@ fn expand(
 	Ok(::quote::quote! {
 		#item_copy
 
+		#[derive( #derives )]
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*
 		}
