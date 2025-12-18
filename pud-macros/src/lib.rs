@@ -2,12 +2,12 @@
 #![no_std]
 extern crate alloc;
 
-mod arguments;
+mod settings;
 mod field;
 mod field_group;
 mod utils;
 use crate::{
-	arguments::{Argument, Arguments},
+	settings::{Argument, Settings},
 	field::Field,
 	field_group::FieldGroups,
 	utils::syn_ident_to_pascal_case,
@@ -38,12 +38,12 @@ fn expand(
 		..
 	} = item;
 
-	let Arguments {
+	let Settings {
 		rename,
 		derives,
 		vis,
 		attrs: transparent_attrs,
-	} = Arguments::from(
+	} = Settings::from(
 		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
 			.parse(args)?,
 	);

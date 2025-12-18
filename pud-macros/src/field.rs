@@ -5,7 +5,7 @@ use ::{
 };
 
 pub(crate) struct Field {
-	args: Arguments,
+	settings: Settings,
 	member: ::syn::Member,
 	pub(crate) ty: ::syn::Type,
 	pub(crate) v_name: ::syn::Ident,
@@ -15,7 +15,7 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 	type Error = ::syn::Error;
 
 	fn try_from((idx, field): (usize, ::syn::Field)) -> ::syn::Result<Self> {
-		let args = Arguments::try_from(field.attrs.as_slice())?;
+		let args = Settings::try_from(field.attrs.as_slice())?;
 		let member = field.ident.clone().map_or(idx.into(), Into::into);
 
 		if matches!(member, ::syn::Member::Unnamed(_)) && args.rename.is_none() {
@@ -25,7 +25,7 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 			));
 		}
 		Ok(Self {
-			args,
+			settings: args,
 			member,
 			ty: field.ty,
 			v_name: ::quote::format_ident!("_{idx}"),
@@ -35,11 +35,11 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 
 impl Field {
 	pub(crate) fn groups(&self) -> impl Iterator<Item = &::syn::Ident> {
-		self.args.groups.iter()
+		self.settings.groups.iter()
 	}
 
 	pub(crate) fn variant_ident(&self) -> ::syn::Ident {
-		self.args.rename.clone().unwrap_or_else(|| {
+		self.settings.rename.clone().unwrap_or_else(|| {
 			let ::syn::Member::Named(ref ident) = self.member else {
 				unreachable!("Checked in TryFrom");
 			};
@@ -74,12 +74,12 @@ impl Field {
 }
 
 #[derive(Default)]
-pub(crate) struct Arguments {
+pub(crate) struct Settings {
 	rename: Option<::syn::Ident>,
 	groups: ::alloc::vec::Vec<::syn::Ident>,
 }
 
-impl TryFrom<&[::syn::Attribute]> for Arguments {
+impl TryFrom<&[::syn::Attribute]> for Settings {
 	type Error = ::syn::Error;
 
 	fn try_from(attrs: &[::syn::Attribute]) -> ::syn::Result<Self> {

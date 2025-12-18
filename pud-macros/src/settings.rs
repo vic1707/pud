@@ -1,14 +1,14 @@
 use crate::utils::parse_parenthesized;
 
 #[derive(Default)]
-pub(crate) struct Arguments {
+pub(crate) struct Settings {
 	pub rename: Option<::syn::Ident>,
 	pub derives: Option<::syn::punctuated::Punctuated<::syn::Path, ::syn::Token![,]>>,
 	pub vis: Option<::syn::Visibility>,
 	pub attrs: ::alloc::vec::Vec<::syn::Meta>,
 }
 
-impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Arguments {
+impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Settings {
 	fn from(punctuated_args: ::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>) -> Self {
 		let mut args = Self::default();
 		for arg in punctuated_args {
