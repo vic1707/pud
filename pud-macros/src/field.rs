@@ -51,17 +51,27 @@ impl Field {
 		let Self { ty, .. } = self;
 		let variant_ident = self.variant_ident();
 
-		::syn::parse_quote! { #variant_ident ( #ty ) }
+		if let Some(ref from) = self.settings.flatten {
+			::syn::parse_quote! { #variant_ident ( #from ) }
+		} else {
+			::syn::parse_quote! { #variant_ident ( #ty ) }
+		}
 	}
 
-	pub(crate) fn assignment(&self) -> ::syn::ExprAssign {
+	pub(crate) fn assignment(&self) -> ::syn::Expr {
 		let Self {
 			member,
 			v_name: name_as_var,
 			..
 		} = self;
 
-		::syn::parse_quote! { target. #member = #name_as_var }
+		if self.settings.flatten.is_some() {
+			::syn::Expr::MethodCall(
+				::syn::parse_quote! { #name_as_var.apply(&mut target. #member ) },
+			)
+		} else {
+			::syn::Expr::Assign(::syn::parse_quote! { target. #member = #name_as_var })
+		}
 	}
 
 	pub(crate) fn match_arm(&self) -> ::syn::Arm {
@@ -76,6 +86,7 @@ impl Field {
 #[derive(Default)]
 pub(crate) struct Settings {
 	rename: Option<::syn::Ident>,
+	flatten: Option<::syn::Path>,
 	groups: ::alloc::vec::Vec<::syn::Ident>,
 }
 
@@ -90,6 +101,7 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 				for arg in parse_pud_attr.parse2(attr.meta.to_token_stream())? {
 					match arg {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
+						Argument::Flatten(from) => args.flatten = Some(from),
 						Argument::Group(group) => args.groups.push(group),
 					}
 				}
@@ -103,6 +115,7 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 pub(crate) enum Argument {
 	Rename(::syn::Ident),
 	Group(::syn::Ident),
+	Flatten(::syn::Path),
 }
 
 impl ::syn::parse::Parse for Argument {
@@ -120,6 +133,11 @@ impl ::syn::parse::Parse for Argument {
 				input.parse::<::syn::Token![=]>()?;
 				let group = input.parse()?;
 				Self::Group(group)
+			},
+			"flatten" => {
+				input.parse::<::syn::Token![=]>()?;
+				let from = input.parse()?;
+				Self::Flatten(from)
 			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};
