@@ -32,13 +32,13 @@ fn expand(
 	let item_copy = stripped_pud_field_attrs(item.clone());
 	let ::syn::ItemStruct {
 		fields,
-		vis,
+		vis: original_vis,
 		ident,
 		generics,
 		..
 	} = item;
 
-	let Arguments { rename, derives } = Arguments::from(
+	let Arguments { rename, derives, vis } = Arguments::from(
 		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
 			.parse(args)?,
 	);
@@ -59,6 +59,7 @@ fn expand(
 	let groups_variants = groups.variants();
 	let groups_arms = groups.match_arms();
 
+    let vis = vis.unwrap_or(original_vis);
 	Ok(::quote::quote! {
 		#item_copy
 

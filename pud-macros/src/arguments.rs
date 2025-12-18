@@ -4,6 +4,7 @@ use crate::utils::parse_parenthesized;
 pub(crate) struct Arguments {
 	pub rename: Option<::syn::Ident>,
 	pub derives: Option<::syn::punctuated::Punctuated<::syn::Path, ::syn::Token![,]>>,
+	pub vis: Option<::syn::Visibility>,
 }
 
 impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Arguments {
@@ -13,6 +14,7 @@ impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Argumen
 			match arg {
 				Argument::Rename(new_name) => args.rename = Some(new_name),
 				Argument::Derive(derives) => args.derives = Some(derives),
+				Argument::Vis(vis) => args.vis = Some(vis),
 			}
 		}
 		args
@@ -22,6 +24,7 @@ impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Argumen
 pub(crate) enum Argument {
 	Rename(::syn::Ident),
 	Derive(::syn::punctuated::Punctuated<::syn::Path, ::syn::Token![,]>),
+	Vis(::syn::Visibility),
 }
 
 impl ::syn::parse::Parse for Argument {
@@ -32,12 +35,17 @@ impl ::syn::parse::Parse for Argument {
 		let arg = match ident.to_string().as_str() {
 			"rename" => {
 				input.parse::<::syn::Token![=]>()?;
-				let new_name = input.parse::<::syn::Ident>()?;
+				let new_name = input.parse()?;
 				Self::Rename(new_name)
 			},
 			"derive" => {
 				let derives = parse_parenthesized(input)?;
 				Self::Derive(derives)
+			},
+			"vis" => {
+				input.parse::<::syn::Token![=]>()?;
+				let vis = input.parse()?;
+				Self::Vis(vis)
 			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};
