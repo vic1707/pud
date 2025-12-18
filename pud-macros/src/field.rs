@@ -113,12 +113,12 @@ impl ::syn::parse::Parse for Argument {
 		let arg = match ident.to_string().as_str() {
 			"rename" => {
 				input.parse::<::syn::Token![=]>()?;
-				let new_name = input.parse::<::syn::Ident>()?;
+				let new_name = input.parse()?;
 				Self::Rename(new_name)
 			},
 			"group" => {
 				input.parse::<::syn::Token![=]>()?;
-				let group = input.parse::<::syn::Ident>()?;
+				let group = input.parse()?;
 				Self::Group(group)
 			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
