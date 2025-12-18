@@ -38,7 +38,12 @@ fn expand(
 		..
 	} = item;
 
-	let Arguments { rename, derives, vis } = Arguments::from(
+	let Arguments {
+		rename,
+		derives,
+		vis,
+		attrs: transparent_attrs,
+	} = Arguments::from(
 		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
 			.parse(args)?,
 	);
@@ -59,11 +64,12 @@ fn expand(
 	let groups_variants = groups.variants();
 	let groups_arms = groups.match_arms();
 
-    let vis = vis.unwrap_or(original_vis);
+	let vis = vis.unwrap_or(original_vis);
 	Ok(::quote::quote! {
 		#item_copy
 
 		#[derive( #derives )]
+        #( #[ #transparent_attrs ] )*
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
 			#( #groups_variants ),*
