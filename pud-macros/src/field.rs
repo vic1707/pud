@@ -1,4 +1,3 @@
-// TODO: `skip` doesn't handle missing generics
 use crate::syn_ident_to_pascal_case;
 use ::{
 	quote::ToTokens as _,
@@ -35,10 +34,6 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 }
 
 impl Field {
-	pub(crate) fn skip(&self) -> bool {
-		self.args.skip
-	}
-
 	pub(crate) fn groups(&self) -> impl Iterator<Item = &::syn::Ident> {
 		self.args.groups.iter()
 	}
@@ -81,7 +76,6 @@ impl Field {
 #[derive(Default)]
 pub(crate) struct Arguments {
 	rename: Option<::syn::Ident>,
-	skip: bool,
 	groups: ::alloc::vec::Vec<::syn::Ident>,
 }
 
@@ -96,7 +90,6 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 				for arg in parse_pud_attr.parse2(attr.meta.to_token_stream())? {
 					match arg {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
-						Argument::Skip => args.skip = true,
 						Argument::Group(group) => args.groups.push(group),
 					}
 				}
@@ -109,7 +102,6 @@ impl TryFrom<&[::syn::Attribute]> for Arguments {
 
 pub(crate) enum Argument {
 	Rename(::syn::Ident),
-	Skip,
 	Group(::syn::Ident),
 }
 
@@ -124,7 +116,6 @@ impl ::syn::parse::Parse for Argument {
 				let new_name = input.parse::<::syn::Ident>()?;
 				Self::Rename(new_name)
 			},
-			"skip" => Self::Skip,
 			"group" => {
 				input.parse::<::syn::Token![=]>()?;
 				let group = input.parse::<::syn::Ident>()?;
