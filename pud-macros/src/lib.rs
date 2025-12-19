@@ -2,14 +2,14 @@
 #![no_std]
 extern crate alloc;
 
-mod settings;
 mod field;
 mod field_group;
+mod settings;
 mod utils;
 use crate::{
-	settings::{Argument, Settings},
 	field::Field,
 	field_group::FieldGroups,
+	settings::{Argument, Settings},
 	utils::syn_ident_to_pascal_case,
 };
 use ::syn::parse::Parser as _;
@@ -69,7 +69,7 @@ fn expand(
 		#item_copy
 
 		#[derive( #derives )]
-        #( #[ #transparent_attrs ] )*
+		#( #[ #transparent_attrs ] )*
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
 			#( #groups_variants ),*
