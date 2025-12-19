@@ -1,4 +1,4 @@
-use crate::utils::parse_parenthesized;
+use crate::utils::parse_parenthesized_list;
 
 #[derive(Default)]
 pub(crate) struct Settings {
@@ -45,7 +45,7 @@ impl ::syn::parse::Parse for Argument {
 				Self::Vis(vis)
 			},
 			"attrs" => {
-				let attrs = parse_parenthesized(input)?;
+				let attrs = parse_parenthesized_list(input)?;
 				Self::Attrs(attrs)
 			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
