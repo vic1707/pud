@@ -1,4 +1,4 @@
-use crate::syn_ident_to_pascal_case;
+use crate::{syn_ident_to_pascal_case, utils::parse_parentheses};
 use ::{
 	quote::ToTokens as _,
 	syn::parse::{Parse as _, Parser as _},
@@ -21,9 +21,17 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 		if matches!(member, ::syn::Member::Unnamed(_)) && args.rename.is_none() {
 			return Err(::syn::Error::new_spanned(
 				&field,
-				"Unnamed fields must have a `#[pud(rename = Name)]`",
+				"Unnamed fields must have a `#[pud(rename = Name)]`.",
 			));
 		}
+
+		if args.map.is_some() && args.flatten.is_some() {
+			return Err(::syn::Error::new_spanned(
+				&field,
+				"Use either `map` or `flatten`, not both.",
+			));
+		}
+
 		Ok(Self {
 			settings: args,
 			member,
@@ -53,6 +61,8 @@ impl Field {
 
 		if let Some(ref from) = self.settings.flatten {
 			::syn::parse_quote! { #variant_ident ( #from ) }
+		} else if let Some((ref from, _)) = self.settings.map {
+			::syn::parse_quote! { #variant_ident ( #from ) }
 		} else {
 			::syn::parse_quote! { #variant_ident ( #ty ) }
 		}
@@ -69,6 +79,8 @@ impl Field {
 			::syn::Expr::MethodCall(
 				::syn::parse_quote! { #name_as_var.apply(&mut target. #member ) },
 			)
+		} else if let Some((_, ref map)) = self.settings.map {
+			::syn::Expr::Assign(::syn::parse_quote! { target. #member = ( #map )( #name_as_var ) })
 		} else {
 			::syn::Expr::Assign(::syn::parse_quote! { target. #member = #name_as_var })
 		}
@@ -88,6 +100,7 @@ pub(crate) struct Settings {
 	rename: Option<::syn::Ident>,
 	flatten: Option<::syn::Path>,
 	groups: ::alloc::vec::Vec<::syn::Ident>,
+	map: Option<(::syn::Path, crate::utils::CustomFunction)>,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Settings {
@@ -103,6 +116,7 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
 						Argument::Flatten(from) => args.flatten = Some(from),
 						Argument::Group(group) => args.groups.push(group),
+						Argument::Map(map) => args.map = Some(map),
 					}
 				}
 			}
@@ -116,6 +130,7 @@ pub(crate) enum Argument {
 	Rename(::syn::Ident),
 	Group(::syn::Ident),
 	Flatten(::syn::Path),
+	Map((::syn::Path, crate::utils::CustomFunction)),
 }
 
 impl ::syn::parse::Parse for Argument {
@@ -138,6 +153,13 @@ impl ::syn::parse::Parse for Argument {
 				input.parse::<::syn::Token![=]>()?;
 				let from = input.parse()?;
 				Self::Flatten(from)
+			},
+			"map" => {
+				let inner = parse_parentheses(input)?;
+				let ty = inner.parse()?;
+				let _ = inner.parse::<::syn::Token![>>=]>()?;
+				let func = inner.parse()?;
+				Self::Map((ty, func))
 			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};

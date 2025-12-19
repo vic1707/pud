@@ -19,3 +19,47 @@ pub(crate) fn parse_parentheses(
 	syn::parenthesized!(content in input);
 	Ok(content)
 }
+
+/// Either
+/// custom = `path::to::fn`
+/// custom = |input: Type| { ...; return .. }
+pub(crate) enum CustomFunction {
+	/// Path to the function to run of signature
+	/// Fn(mut Inner) -> Inner
+	/// mut being optional
+	Path(syn::Path),
+	/// Closure of type
+	/// Fn(mut Inner) -> Inner
+	/// mut being optional
+	Closure(syn::ExprClosure),
+}
+
+impl ::syn::parse::Parse for CustomFunction {
+	fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
+		let closure = if let Ok(path) = input.parse() {
+			Self::Path(path)
+		} else if let Ok(closure) = input.parse() {
+			Self::Closure(closure)
+		} else {
+			return Err(syn::Error::new(
+				input.span(),
+				"Invalid `map` argument input.",
+			));
+		};
+
+		if !input.peek(syn::Token![,]) && !input.is_empty() {
+			return Err(input.error("Unexpected token(s)."));
+		}
+
+		Ok(closure)
+	}
+}
+
+impl ::quote::ToTokens for CustomFunction {
+	fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
+		match *self {
+			Self::Path(ref path) => path.to_tokens(tokens),
+			Self::Closure(ref closure) => closure.to_tokens(tokens),
+		}
+	}
+}
