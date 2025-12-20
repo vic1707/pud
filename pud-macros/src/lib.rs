@@ -40,7 +40,6 @@ fn expand(
 
 	let Settings {
 		rename,
-		derives,
 		vis,
 		attrs: transparent_attrs,
 	} = Settings::from(
@@ -68,7 +67,6 @@ fn expand(
 	Ok(::quote::quote! {
 		#item_copy
 
-		#[derive( #derives )]
 		#( #[ #transparent_attrs ] )*
 		#vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,

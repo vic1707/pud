@@ -3,7 +3,6 @@ use crate::utils::parse_parenthesized_list;
 #[derive(Default)]
 pub(crate) struct Settings {
 	pub rename: Option<::syn::Ident>,
-	pub derives: Option<::syn::punctuated::Punctuated<::syn::Path, ::syn::Token![,]>>,
 	pub vis: Option<::syn::Visibility>,
 	pub attrs: ::alloc::vec::Vec<::syn::Meta>,
 }
