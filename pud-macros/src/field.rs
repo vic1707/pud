@@ -98,9 +98,9 @@ impl Field {
 #[derive(Default)]
 pub(crate) struct Settings {
 	rename: Option<::syn::Ident>,
-	flatten: Option<::syn::Path>,
+	flatten: Option<::syn::Type>,
 	groups: ::alloc::vec::Vec<::syn::Ident>,
-	map: Option<(::syn::Path, crate::utils::CustomFunction)>,
+	map: Option<(::syn::Type, crate::utils::CustomFunction)>,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Settings {
@@ -129,8 +129,8 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 pub(crate) enum Argument {
 	Rename(::syn::Ident),
 	Group(::syn::Ident),
-	Flatten(::syn::Path),
-	Map((::syn::Path, crate::utils::CustomFunction)),
+	Flatten(::syn::Type),
+	Map((::syn::Type, crate::utils::CustomFunction)),
 }
 
 impl ::syn::parse::Parse for Argument {
