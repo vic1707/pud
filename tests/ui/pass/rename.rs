@@ -4,10 +4,10 @@ fn main() {}
 pub struct Foo {
 	#[pud(rename = TOTO)]
 	foo: u8,
-	#[pud(rename = BaR)]
+	#[pud(rename = Other)]
 	#[pud(rename = BAR)]
 	bar: f64,
-	#[pud(rename = BaZ, rename = BAZ)]
+	#[pud(rename = Other, rename = BAZ)]
 	baz: &'static str,
 }
 
