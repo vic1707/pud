@@ -9,3 +9,6 @@ members = ["pud-macros"]
 
 [dependencies]
 pud-macros = { path = "./pud-macros" }
+
+[dev-dependencies]
+trybuild = { version = "1.0.114", default-features = false }

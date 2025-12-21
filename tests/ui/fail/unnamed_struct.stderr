@@ -1,0 +1,5 @@
+error: Unnamed fields must have a `#[pud(rename = Name)]`.
+ --> tests/ui/fail/unnamed_struct.rs:4:16
+  |
+4 | pub struct Foo(u8); // missing rename for tuple fields
+  |                ^^

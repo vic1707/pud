@@ -1,0 +1,28 @@
+error[E0365]: `FooPud` is private, and cannot be re-exported
+  --> tests/ui/fail/visibility_super.rs:10:10
+   |
+10 |     pub use foo::FooPud; // shouldn't be accessible here
+   |             ^^^^^^^^^^^ re-export of private `FooPud`
+   |
+   = note: consider declaring type or module `FooPud` with `pub`
+
+error[E0603]: enum `FooPud` is private
+  --> tests/ui/fail/visibility_super.rs:13:15
+   |
+13 | use def::foo::FooPud; // shouldn't be accessible here
+   |               ^^^^^^ private enum
+   |
+note: the enum `FooPud` is defined here
+  --> tests/ui/fail/visibility_super.rs:5:3
+   |
+ 5 |         #[::pud::pud(vis = pub(super))]
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: this error originates in the attribute macro `::pud::pud` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `foo::FooPud`
+  --> tests/ui/fail/visibility_super.rs:10:10
+   |
+10 |     pub use foo::FooPud; // shouldn't be accessible here
+   |             ^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
