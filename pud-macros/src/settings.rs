@@ -1,14 +1,21 @@
 use crate::utils::parse_parenthesized_list;
+use ::{
+	alloc::vec::Vec,
+	syn::{
+		parse::{Parse, ParseStream},
+		punctuated::Punctuated,
+	},
+};
 
 #[derive(Default)]
-pub(crate) struct Settings {
+pub struct Settings {
 	pub rename: Option<::syn::Ident>,
 	pub vis: Option<::syn::Visibility>,
-	pub attrs: ::alloc::vec::Vec<::syn::Meta>,
+	pub attrs: Vec<::syn::Meta>,
 }
 
-impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Settings {
-	fn from(punctuated_args: ::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>) -> Self {
+impl From<Punctuated<Argument, ::syn::Token![,]>> for Settings {
+	fn from(punctuated_args: Punctuated<Argument, ::syn::Token![,]>) -> Self {
 		let mut args = Self::default();
 		for arg in punctuated_args {
 			match arg {
@@ -21,14 +28,14 @@ impl From<::syn::punctuated::Punctuated<Argument, ::syn::Token![,]>> for Setting
 	}
 }
 
-pub(crate) enum Argument {
+pub enum Argument {
 	Rename(::syn::Ident),
 	Vis(::syn::Visibility),
-	Attrs(::syn::punctuated::Punctuated<::syn::Meta, ::syn::Token![,]>),
+	Attrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
 }
 
-impl ::syn::parse::Parse for Argument {
-	fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
+impl Parse for Argument {
+	fn parse(input: ParseStream) -> ::syn::Result<Self> {
 		use ::alloc::string::ToString as _;
 
 		let ident = input.parse::<::syn::Ident>()?;

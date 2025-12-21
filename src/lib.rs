@@ -1,6 +1,8 @@
-#![doc = include_str!("../README.md")]
-// #![no_implicit_prelude] // TODO: enable?
+#![cfg_attr(doc, doc = include_str!("../README.md"))]
+#![expect(clippy::pub_use, reason = "re-exports")]
 #![no_std]
+
+use ::core::convert::Infallible;
 
 pub use ::pud_macros::pud;
 
@@ -19,11 +21,13 @@ pub trait Pud {
 /// Provides ability for applying one or more modifications from the target object.
 pub trait Pudded: Sized {
 	/// Apply a single modification.
+	#[inline]
 	fn apply(&mut self, pud: impl Pud<Target = Self>) {
 		pud.apply(self);
 	}
 
 	/// Apply multiple modifications in sequence.
+	#[inline]
 	fn apply_batch(&mut self, puds: impl Iterator<Item = impl Pud<Target = Self>>) {
 		puds.for_each(|p| p.apply(self));
 	}
@@ -56,6 +60,10 @@ pub trait TryIntoPud {
 	type Error;
 
 	/// Attempt to convert `self` into a Pud.
+	///
+	/// # Errors
+	///
+	/// Will return `Error` if conversion fails.
 	fn try_into_pud(self) -> Result<Self::Pud, Self::Error>;
 }
 
@@ -64,8 +72,9 @@ where
 	T: IntoPud,
 {
 	type Pud = T::Pud;
-	type Error = ::core::convert::Infallible;
+	type Error = Infallible;
 
+	#[inline]
 	fn try_into_pud(self) -> Result<Self::Pud, Self::Error> {
 		Ok(self.into_pud())
 	}

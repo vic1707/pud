@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+#![cfg_attr(doc, doc = include_str!("../README.md"))]
 #![no_std]
 extern crate alloc;
 
@@ -12,7 +12,10 @@ use crate::{
 	settings::{Argument, Settings},
 	utils::syn_ident_to_pascal_case,
 };
-use ::syn::parse::Parser as _;
+use ::{
+	alloc::vec::Vec,
+	syn::{parse::Parser as _, punctuated::Punctuated},
+};
 
 #[proc_macro_attribute]
 pub fn pud(
@@ -28,29 +31,26 @@ fn expand(
 	args: ::proc_macro::TokenStream,
 	item: ::proc_macro::TokenStream,
 ) -> ::syn::Result<::proc_macro2::TokenStream> {
-	let item: ::syn::ItemStruct = ::syn::parse(item)?;
-	let item_copy = stripped_pud_field_attrs(item.clone());
+	let input_struct: ::syn::ItemStruct = ::syn::parse(item)?;
+	let item_copy = stripped_pud_field_attrs(input_struct.clone());
 	let ::syn::ItemStruct {
 		fields,
 		vis: original_vis,
 		ident,
 		generics,
 		..
-	} = item;
+	} = input_struct;
 
 	let Settings {
 		rename,
 		vis,
 		attrs: transparent_attrs,
-	} = Settings::from(
-		::syn::punctuated::Punctuated::<Argument, ::syn::Token![,]>::parse_terminated
-			.parse(args)?,
-	);
+	} = Settings::from(Punctuated::<Argument, ::syn::Token![,]>::parse_terminated.parse(args)?);
 
-	let enum_name = rename.unwrap_or(::quote::format_ident!("{}Pud", ident));
+	let enum_name = rename.unwrap_or_else(|| ::quote::format_ident!("{}Pud", ident));
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	let fields_and_types: ::alloc::vec::Vec<_> = fields
+	let fields_and_types: Vec<_> = fields
 		.into_iter()
 		.enumerate()
 		.map(Field::try_from)
@@ -63,12 +63,12 @@ fn expand(
 	let groups_variants = groups.variants();
 	let groups_arms = groups.match_arms();
 
-	let vis = vis.unwrap_or(original_vis);
+	let pud_vis = vis.unwrap_or(original_vis);
 	Ok(::quote::quote! {
 		#item_copy
 
 		#( #[ #transparent_attrs ] )*
-		#vis enum #enum_name #impl_generics #where_clause {
+		#pud_vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
 			#( #groups_variants ),*
 		}
@@ -87,7 +87,7 @@ fn expand(
 }
 
 fn stripped_pud_field_attrs(mut item: ::syn::ItemStruct) -> ::syn::ItemStruct {
-	for field in item.fields.iter_mut() {
+	for field in &mut item.fields {
 		field.attrs.retain(|attr| !attr.path().is_ident("pud"));
 	}
 	item

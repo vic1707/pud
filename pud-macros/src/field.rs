@@ -1,14 +1,21 @@
-use crate::{syn_ident_to_pascal_case, utils::parse_parentheses};
+use crate::{
+	syn_ident_to_pascal_case,
+	utils::{self, parse_parentheses},
+};
 use ::{
+	alloc::vec::Vec,
 	quote::ToTokens as _,
-	syn::parse::{Parse as _, Parser as _},
+	syn::{
+		parse::{Parse, ParseStream, Parser as _},
+		punctuated::Punctuated,
+	},
 };
 
-pub(crate) struct Field {
+pub struct Field {
 	settings: Settings,
 	member: ::syn::Member,
-	pub(crate) ty: ::syn::Type,
-	pub(crate) v_name: ::syn::Ident,
+	ty: ::syn::Type,
+	v_name: ::syn::Ident,
 }
 
 impl TryFrom<(usize, ::syn::Field)> for Field {
@@ -16,7 +23,7 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 
 	fn try_from((idx, field): (usize, ::syn::Field)) -> ::syn::Result<Self> {
 		let args = Settings::try_from(field.attrs.as_slice())?;
-		let member = field.ident.clone().map_or(idx.into(), Into::into);
+		let member = field.ident.clone().map_or_else(|| idx.into(), Into::into);
 
 		if matches!(member, ::syn::Member::Unnamed(_)) && args.rename.is_none() {
 			return Err(::syn::Error::new_spanned(
@@ -46,8 +53,17 @@ impl Field {
 		self.settings.groups.iter()
 	}
 
+	pub(crate) const fn ty(&self) -> &::syn::Type {
+		&self.ty
+	}
+
+	pub(crate) const fn v_name(&self) -> &::syn::Ident {
+		&self.v_name
+	}
+
 	pub(crate) fn variant_ident(&self) -> ::syn::Ident {
 		self.settings.rename.clone().unwrap_or_else(|| {
+			#[expect(clippy::unreachable, reason = "Checked in TryFrom")]
 			let ::syn::Member::Named(ref ident) = self.member else {
 				unreachable!("Checked in TryFrom");
 			};
@@ -56,24 +72,21 @@ impl Field {
 	}
 
 	pub(crate) fn to_variant(&self) -> ::syn::Variant {
-		let Self { ty, .. } = self;
+		let ty = &self.ty;
 		let variant_ident = self.variant_ident();
 
-		if let Some(ref from) = self.settings.flatten {
-			::syn::parse_quote! { #variant_ident ( #from ) }
-		} else if let Some((ref from, _)) = self.settings.map {
-			::syn::parse_quote! { #variant_ident ( #from ) }
-		} else {
-			::syn::parse_quote! { #variant_ident ( #ty ) }
-		}
+		self.settings.flatten.as_ref().map_or_else(
+			|| match self.settings.map {
+				Some((ref from, _)) => ::syn::parse_quote! { #variant_ident ( #from ) },
+				None => ::syn::parse_quote! { #variant_ident ( #ty ) },
+			},
+			|from| ::syn::parse_quote! { #variant_ident ( #from ) },
+		)
 	}
 
 	pub(crate) fn assignment(&self) -> ::syn::Expr {
-		let Self {
-			member,
-			v_name: name_as_var,
-			..
-		} = self;
+		let member = &self.member;
+		let name_as_var = &self.v_name;
 
 		if self.settings.flatten.is_some() {
 			::syn::Expr::MethodCall(
@@ -96,11 +109,11 @@ impl Field {
 }
 
 #[derive(Default)]
-pub(crate) struct Settings {
+pub struct Settings {
 	rename: Option<::syn::Ident>,
 	flatten: Option<::syn::Type>,
-	groups: ::alloc::vec::Vec<::syn::Ident>,
-	map: Option<(::syn::Type, crate::utils::CustomFunction)>,
+	groups: Vec<::syn::Ident>,
+	map: Option<(::syn::Type, utils::CustomFunction)>,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Settings {
@@ -126,15 +139,15 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 	}
 }
 
-pub(crate) enum Argument {
+pub enum Argument {
 	Rename(::syn::Ident),
 	Group(::syn::Ident),
 	Flatten(::syn::Type),
-	Map((::syn::Type, crate::utils::CustomFunction)),
+	Map((::syn::Type, utils::CustomFunction)),
 }
 
-impl ::syn::parse::Parse for Argument {
-	fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
+impl Parse for Argument {
+	fn parse(input: ParseStream) -> ::syn::Result<Self> {
 		use ::alloc::string::ToString as _;
 
 		let ident = input.parse::<::syn::Ident>()?;
@@ -157,7 +170,7 @@ impl ::syn::parse::Parse for Argument {
 			"map" => {
 				let inner = parse_parentheses(input)?;
 				let ty = inner.parse()?;
-				let _ = inner.parse::<::syn::Token![>>=]>()?;
+				_ = inner.parse::<::syn::Token![>>=]>()?;
 				let func = inner.parse()?;
 				Self::Map((ty, func))
 			},
@@ -171,9 +184,7 @@ mod kw {
 	::syn::custom_keyword!(pud);
 }
 
-fn parse_pud_attr(
-	attr_ts: ::syn::parse::ParseStream,
-) -> syn::Result<::syn::punctuated::Punctuated<Argument, syn::Token![,]>> {
+fn parse_pud_attr(attr_ts: ParseStream) -> syn::Result<Punctuated<Argument, syn::Token![,]>> {
 	attr_ts.parse::<kw::pud>()?;
 	let content;
 	syn::parenthesized!(content in attr_ts);

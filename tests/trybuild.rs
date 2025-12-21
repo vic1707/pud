@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 #[test]
 fn ui_pass() {
 	trybuild::TestCases::new().pass("tests/ui/pass/*.rs");

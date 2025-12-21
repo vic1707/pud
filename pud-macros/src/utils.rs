@@ -1,21 +1,24 @@
-pub(crate) fn syn_ident_to_pascal_case(ident: &::syn::Ident) -> ::syn::Ident {
+use ::syn::{
+	parse::{Parse, ParseBuffer, ParseStream},
+	punctuated::Punctuated,
+};
+
+pub fn syn_ident_to_pascal_case(ident: &::syn::Ident) -> ::syn::Ident {
 	use ::alloc::string::ToString as _;
 
 	::quote::format_ident!("{}", ::convert_case::ccase!(pascal, ident.to_string()))
 }
 
-pub(crate) fn parse_parenthesized_list<T: ::syn::parse::Parse>(
+pub fn parse_parenthesized_list<T: Parse>(
 	input: ::syn::parse::ParseStream,
-) -> ::syn::Result<::syn::punctuated::Punctuated<T, ::syn::Token![,]>> {
-	let content: ::syn::parse::ParseBuffer<'_>;
+) -> ::syn::Result<Punctuated<T, ::syn::Token![,]>> {
+	let content: ParseBuffer<'_>;
 	syn::parenthesized!(content in input);
 	content.parse_terminated(T::parse, ::syn::Token![,])
 }
 
-pub(crate) fn parse_parentheses(
-	input: ::syn::parse::ParseStream<'_>,
-) -> ::syn::Result<::syn::parse::ParseBuffer<'_>> {
-	let content: ::syn::parse::ParseBuffer<'_>;
+pub fn parse_parentheses(input: ParseStream<'_>) -> ::syn::Result<ParseBuffer<'_>> {
+	let content: ParseBuffer<'_>;
 	syn::parenthesized!(content in input);
 	Ok(content)
 }
@@ -23,22 +26,22 @@ pub(crate) fn parse_parentheses(
 /// Either
 /// custom = `path::to::fn`
 /// custom = |input: Type| { ...; return .. }
-pub(crate) enum CustomFunction {
+pub enum CustomFunction {
 	/// Path to the function to run of signature
 	/// Fn(mut Inner) -> Inner
 	/// mut being optional
-	Path(syn::Path),
+	Path(::syn::Path),
 	/// Closure of type
 	/// Fn(mut Inner) -> Inner
 	/// mut being optional
-	Closure(syn::ExprClosure),
+	Closure(::syn::ExprClosure),
 }
 
-impl ::syn::parse::Parse for CustomFunction {
-	fn parse(input: ::syn::parse::ParseStream) -> ::syn::Result<Self> {
-		let closure = if let Ok(path) = input.parse() {
+impl Parse for CustomFunction {
+	fn parse(input: ParseStream) -> ::syn::Result<Self> {
+		let closure = if let Ok(path) = input.parse::<::syn::Path>() {
 			Self::Path(path)
-		} else if let Ok(closure) = input.parse() {
+		} else if let Ok(closure) = input.parse::<::syn::ExprClosure>() {
 			Self::Closure(closure)
 		} else {
 			return Err(syn::Error::new(

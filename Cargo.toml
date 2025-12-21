@@ -7,8 +7,27 @@ edition = "2024"
 resolver = "3"
 members = ["pud-macros"]
 
+[lints]
+workspace = true
+
 [dependencies]
 pud-macros = { path = "./pud-macros" }
 
 [dev-dependencies]
 trybuild = { version = "1.0.114", default-features = false }
+
+[workspace.lints.rust]
+rust_2024_compatibility = "deny"
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+# <https://doc.rust-lang.org/clippy/lints.html#deprecated>
+correctness = "deny"
+suspicious = "deny"
+complexity = "deny"
+perf = "deny"
+style = "deny"
+pedantic = "deny"
+restriction = "deny"
+# cargo = "deny"
+nursery = "deny"
