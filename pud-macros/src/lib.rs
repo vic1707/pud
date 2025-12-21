@@ -1,5 +1,19 @@
 #![cfg_attr(doc, doc = include_str!("../README.md"))]
 #![no_std]
+#![allow(clippy::missing_docs_in_private_items, reason = "expect doesn't work")]
+#![expect(
+	clippy::blanket_clippy_restriction_lints,
+	clippy::implicit_return,
+	clippy::arbitrary_source_item_ordering,
+	clippy::min_ident_chars,
+	clippy::missing_trait_methods,
+	clippy::question_mark_used,
+	clippy::single_call_fn,
+	clippy::single_char_lifetime_names,
+	clippy::ref_patterns,
+	reason = "_"
+)]
+
 extern crate alloc;
 
 mod field;

@@ -1,5 +1,13 @@
 #![cfg_attr(doc, doc = include_str!("../README.md"))]
-#![expect(clippy::pub_use, reason = "re-exports")]
+#![expect(
+	clippy::pub_use,
+	clippy::blanket_clippy_restriction_lints,
+	clippy::arbitrary_source_item_ordering,
+	clippy::missing_trait_methods,
+	clippy::implicit_return,
+	reason = "re-exports"
+)]
+#![allow(clippy::missing_docs_in_private_items, reason = "expect doesn't work")]
 #![no_std]
 
 use ::core::convert::Infallible;
@@ -29,7 +37,7 @@ pub trait Pudded: Sized {
 	/// Apply multiple modifications in sequence.
 	#[inline]
 	fn apply_batch(&mut self, puds: impl Iterator<Item = impl Pud<Target = Self>>) {
-		puds.for_each(|p| p.apply(self));
+		puds.for_each(|pud| pud.apply(self));
 	}
 }
 
