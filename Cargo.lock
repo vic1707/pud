@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "pud"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "pud-macros",
  "trybuild",
@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "pud-macros"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "convert_case",
  "proc-macro2",

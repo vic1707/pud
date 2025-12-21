@@ -1,6 +1,6 @@
 [package]
 name = "pud-macros"
-version = "0.0.0"
+version = "0.0.1"
 edition = "2024"
 authors = ["Victor LEFEBVRE"]
 description = "Generate typed, composable, no-std-friendly modifications (“puds”) for Rust structs."
