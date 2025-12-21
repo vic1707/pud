@@ -2,7 +2,16 @@
 name = "pud"
 version = "0.0.0"
 edition = "2024"
-rust-version = "1.85"
+authors = ["Victor LEFEBVRE"]
+description = "Generate typed, composable, no-std-friendly modifications (“puds”) for Rust structs."
+documentation = "https://docs.rs/pud"
+homepage = "https://github.com/vic1707/pud"
+license = "WTFPL"
+readme = "README.md"
+repository = "https://github.com/vic1707/pud"
+categories = ["data-structures", "rust-patterns"]
+keywords = ["macros", "atomic-update"]
+rust-version = "1.85.0"
 
 [workspace]
 resolver = "3"
@@ -30,5 +39,5 @@ perf = "deny"
 style = "deny"
 pedantic = "deny"
 restriction = "deny"
-# cargo = "deny"
+cargo = "deny"
 nursery = "deny"

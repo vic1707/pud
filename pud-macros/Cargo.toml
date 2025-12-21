@@ -2,6 +2,16 @@
 name = "pud-macros"
 version = "0.0.0"
 edition = "2024"
+authors = ["Victor LEFEBVRE"]
+description = "Generate typed, composable, no-std-friendly modifications (“puds”) for Rust structs."
+documentation = "https://docs.rs/pud"
+homepage = "https://github.com/vic1707/pud"
+license = "WTFPL"
+readme = "README.md"
+repository = "https://github.com/vic1707/pud"
+categories = ["data-structures", "rust-patterns"]
+keywords = ["macros", "atomic-update"]
+rust-version = "1.85.0"
 
 [lib]
 proc-macro = true
