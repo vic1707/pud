@@ -1,5 +1,12 @@
 # pud
 
+[<img alt="github" src="https://img.shields.io/badge/github-vic1707/pud-8da0cb?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/vic1707/pud)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/pud.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/pud)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-pud-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/pud)
+[<img alt="lines" src="https://www.aschey.tech/tokei/github.com/vic1707/pud?label=&style=for-the-badge&logo=https://simpleicons.org/icons/rust.svg?logoAsLabel%3D1?category%3Dcode" height="20">](https://github.com/vic1707/pud)
+[<img alt="maintenance" src="https://img.shields.io/badge/maintenance-activly--developed-brightgreen.svg?style=for-the-badge" height="20">](https://github.com/vic1707/pud)
+
+
 `pud` is a procedural macro and trait system for generating typed, composable, no-std-friendly modifications (“puds”) for Rust structs.
 
 ---

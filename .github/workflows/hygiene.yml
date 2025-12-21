@@ -1,0 +1,62 @@
+name: Hygiene
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        types:
+            - opened
+            - reopened
+            - synchronize
+            - ready_for_review
+    workflow_dispatch:
+
+env:
+    MSRV: 1.85.1
+
+permissions: {}
+
+jobs:
+    code-hygiene:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  persist-credentials: false
+
+            - name: Install Rust
+              uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # v1.15.2
+              with:
+                  components: rustfmt, clippy
+                  toolchain: ${{ env.MSRV }}
+
+            - name: Rustfmt
+              run: cargo fmt --all --check
+
+            - name: Clippy
+              run: cargo clippy --all-features
+
+            - name: Check for typos
+              uses: crate-ci/typos@80c8a4945eec0f6d464eaf9e65ed98ef085283d1 # v1.38.1
+
+    tests:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  persist-credentials: false
+
+            - name: Install Rust
+              uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # v1.15.2
+              with:
+                  components: rust-src # https://github.com/dtolnay/trybuild?tab=readme-ov-file#troubleshooting
+                  toolchain: ${{ env.MSRV }}
+
+            - name: "Tests (features: default)"
+              run: cargo test --no-fail-fast
+
+            - name: "Tests (features: none)"
+              run: cargo test --no-default-features --no-fail-fast
+
+            - name: "Tests (features: all)"
+              run: cargo test --all-features --no-fail-fast
