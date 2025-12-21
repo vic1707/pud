@@ -15,7 +15,7 @@ error[E0603]: enum `FooPud` is private
 note: the enum `FooPud` is defined here
   --> tests/ui/fail/visibility_super.rs:5:3
    |
- 5 |         #[::pud::pud(vis = pub(super))]
+5  |         #[::pud::pud(vis = pub(super))]
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    = note: this error originates in the attribute macro `::pud::pud` (in Nightly builds, run with -Z macro-backtrace for more info)
 
