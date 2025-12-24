@@ -82,6 +82,7 @@ fn expand(
 		#item_copy
 
 		#( #[ #transparent_attrs ] )*
+		#[allow(clippy::exhaustive_enums)]
 		#pud_vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
 			#( #groups_variants ),*
