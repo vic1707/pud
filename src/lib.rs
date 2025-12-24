@@ -12,6 +12,7 @@
 
 use ::core::convert::Infallible;
 
+#[cfg(feature = "macros")]
 pub use ::pud_macros::pud;
 
 /// A single atomic modification that can be applied to a target type.

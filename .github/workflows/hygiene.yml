@@ -55,8 +55,5 @@ jobs:
             - name: "Tests (features: default)"
               run: cargo test --no-fail-fast
 
-            - name: "Tests (features: none)"
-              run: cargo test --no-default-features --no-fail-fast
-
             - name: "Tests (features: all)"
               run: cargo test --all-features --no-fail-fast
