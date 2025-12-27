@@ -7,4 +7,5 @@ mod foo {
 	}
 }
 
+#[expect(unused_imports, reason = "Testing visibility")]
 use foo::FooPud;
