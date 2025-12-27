@@ -78,6 +78,15 @@ fn expand(
 	let groups_arms = groups.match_arms();
 
 	let pud_vis = vis.unwrap_or(original_vis);
+	let has_generics = !generics.params.is_empty();
+	let phantom_variant = has_generics.then(|| {
+		let generic_idents = generics.params.iter().filter_map(|p| match *p {
+			syn::GenericParam::Type(ref ty) => Some(&ty.ident),
+			syn::GenericParam::Lifetime(_) | syn::GenericParam::Const(_) => None,
+		});
+		::quote::quote! { #[doc(hidden)] __(::core::marker::PhantomData<( #( #generic_idents,)* )>), }
+	});
+	let phantom_arm = has_generics.then_some(::quote::quote! { Self::__(_) => {}, });
 	Ok(::quote::quote! {
 		#item_copy
 
@@ -86,6 +95,7 @@ fn expand(
 		#pud_vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
 			#( #groups_variants ),*
+			#phantom_variant
 		}
 
 		#[automatically_derived]
@@ -95,6 +105,7 @@ fn expand(
 				match self {
 					#( #match_arms ),*
 					#( #groups_arms ),*
+					#phantom_arm
 				}
 			}
 		}
