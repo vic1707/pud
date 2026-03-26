@@ -75,7 +75,7 @@ impl Field {
 		let attrs = &self.settings.attrs;
 		let variant_ident = self.variant_ident();
 
-        let variant_ty = self
+		let variant_ty = self
 			.settings
 			.flatten
 			.as_ref()

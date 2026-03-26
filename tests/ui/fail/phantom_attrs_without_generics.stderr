@@ -1,0 +1,5 @@
+error: `phantom_attrs` requires type generics.
+ --> tests/ui/fail/phantom_attrs_without_generics.rs:4:12
+  |
+4 | pub struct Foo {
+  |            ^^^

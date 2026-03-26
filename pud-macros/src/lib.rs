@@ -59,7 +59,9 @@ fn expand(
 		rename,
 		vis,
 		attrs: transparent_attrs,
-	} = Settings::from(Punctuated::<Argument, ::syn::Token![,]>::parse_terminated.parse(args)?);
+		phantom_attrs,
+		group_attrs,
+	} = Settings::try_from(Punctuated::<Argument, ::syn::Token![,]>::parse_terminated.parse(args)?)?;
 
 	let enum_name = rename.unwrap_or_else(|| ::quote::format_ident!("{}Pud", ident));
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -73,18 +75,28 @@ fn expand(
 	let variants = fields_and_types.iter().map(Field::to_variant);
 	let match_arms = fields_and_types.iter().map(Field::match_arm);
 
-	let groups = FieldGroups::from_iter(&fields_and_types);
+	let groups = FieldGroups::try_from_fields_and_attrs(&fields_and_types, group_attrs)?;
 	let groups_variants = groups.variants();
 	let groups_arms = groups.match_arms();
 
 	let pud_vis = vis.unwrap_or(original_vis);
 	let has_generics = !generics.params.is_empty();
+	if !has_generics && !phantom_attrs.is_empty() {
+		return Err(::syn::Error::new_spanned(
+			ident,
+			"`phantom_attrs` requires type generics.",
+		));
+	}
 	let phantom_variant = has_generics.then(|| {
 		let generic_idents = generics.params.iter().filter_map(|p| match *p {
 			syn::GenericParam::Type(ref ty) => Some(&ty.ident),
 			syn::GenericParam::Lifetime(_) | syn::GenericParam::Const(_) => None,
 		});
-		::quote::quote! { #[doc(hidden)] __(::core::marker::PhantomData<( #( #generic_idents,)* )>), }
+		::quote::quote! {
+			#( #[ #phantom_attrs ] )*
+			#[doc(hidden)]
+			__(::core::marker::PhantomData<( #( #generic_idents,)* )>),
+		}
 	});
 	let phantom_arm = has_generics.then_some(::quote::quote! { Self::__(_) => {}, });
 	Ok(::quote::quote! {

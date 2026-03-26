@@ -1,0 +1,5 @@
+error: `group_attrs` references an unknown group.
+ --> tests/ui/fail/unknown_group_attrs.rs:3:26
+  |
+3 | #[::pud::pud(group_attrs(WRONG(allow(dead_code))))]
+  |                          ^^^^^

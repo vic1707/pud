@@ -121,15 +121,37 @@ Struct-level settings are provided inside the `#[pud(...)]` attribute.
         repr(C),
         derive(Debug)
     ),
+    phantom_attrs(allow(dead_code)),
+    group_attrs(
+        FooBarBaz(allow(non_camel_case_types))
+    ),
     rename = CustomPudName
 )]
 ```
 
-| Setting              | Description                                  |
-| -------------------- | -------------------------------------------- |
-| `vis = <visibility>` | Visibility of the generated Pud enum         |
-| `rename = <Ident>`   | Rename the generated Pud enum                |
-| `attrs(...)`         | Attributes applied to the generated Pud enum |
+| Setting                 | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| `vis = <visibility>`    | Visibility of the generated Pud enum                 |
+| `rename = <Ident>`      | Rename the generated Pud enum                        |
+| `attrs(...)`            | Attributes applied to the generated Pud enum         |
+| `phantom_attrs(...)`    | Attributes applied to the hidden `__` generic variant |
+| `group_attrs(...)`      | Attributes applied to generated group variants       |
+
+##### `phantom_attrs(...)`
+
+Applies attributes to the hidden `__` variant that is generated when the Pud enum has type generics.
+
+##### `group_attrs(NAME(...), OTHER(...))`
+
+Applies attributes to generated group variants by group name.
+
+```rs
+#[pud(
+    group_attrs(
+        FooBarBaz(cfg(feature = "grouped"))
+    )
+)]
+```
 
 #### Field-Level Settings
 
@@ -214,6 +236,9 @@ Note: Groups do not remove the individual field variants; both coexist.
     attrs(
         repr(C),
         derive(Debug)
+    ),
+    group_attrs(
+        FooBarBaz(cfg(feature = "grouped"))
     ),
 )]
 #[derive(Debug)]
