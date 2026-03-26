@@ -72,16 +72,20 @@ impl Field {
 	}
 
 	pub(crate) fn to_variant(&self) -> ::syn::Variant {
-		let ty = &self.ty;
+		let attrs = &self.settings.attrs;
 		let variant_ident = self.variant_ident();
 
-		self.settings.flatten.as_ref().map_or_else(
-			|| match self.settings.map {
-				Some((ref from, _)) => ::syn::parse_quote! { #variant_ident ( #from ) },
-				None => ::syn::parse_quote! { #variant_ident ( #ty ) },
-			},
-			|from| ::syn::parse_quote! { #variant_ident ( #from ) },
-		)
+        let variant_ty = self
+			.settings
+			.flatten
+			.as_ref()
+			.or_else(|| self.settings.map.as_ref().map(|map| &map.0))
+			.unwrap_or(&self.ty);
+
+		::syn::parse_quote! {
+			#( #[ #attrs ] )*
+			#variant_ident ( #variant_ty )
+		}
 	}
 
 	pub(crate) fn assignment(&self) -> ::syn::Expr {
@@ -111,6 +115,7 @@ impl Field {
 #[derive(Default)]
 pub struct Settings {
 	rename: Option<::syn::Ident>,
+	attrs: Vec<::syn::Meta>,
 	flatten: Option<::syn::Type>,
 	groups: Vec<::syn::Ident>,
 	map: Option<(::syn::Type, utils::CustomFunction)>,
@@ -127,6 +132,7 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 				for arg in parse_pud_attr.parse2(attr.meta.to_token_stream())? {
 					match arg {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
+						Argument::Attrs(metas) => args.attrs.extend(metas),
 						Argument::Flatten(from) => args.flatten = Some(from),
 						Argument::Group(group) => args.groups.push(group),
 						Argument::Map(map) => args.map = Some(map),
@@ -141,6 +147,7 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 
 pub enum Argument {
 	Rename(::syn::Ident),
+	Attrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
 	Group(::syn::Ident),
 	Flatten(::syn::Type),
 	Map((::syn::Type, utils::CustomFunction)),
@@ -156,6 +163,10 @@ impl Parse for Argument {
 				input.parse::<::syn::Token![=]>()?;
 				let new_name = input.parse()?;
 				Self::Rename(new_name)
+			},
+			"attrs" => {
+				let attrs = utils::parse_parenthesized_list(input)?;
+				Self::Attrs(attrs)
 			},
 			"group" => {
 				input.parse::<::syn::Token![=]>()?;

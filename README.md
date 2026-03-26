@@ -137,6 +137,15 @@ Field settings control how individual fields participate in the Pud enum and how
 
 Settings may be comma-separated or split across multiple `#[pud(...)]` attributes.
 
+##### `attrs(...)`
+
+Applies attributes to the generated Pud variant for that field.
+
+```rs
+#[pud(attrs(cfg(feature = "unstable")))]
+foo: u8,
+```
+
 ##### `rename = Ident`
 
 Renames the generated Pud variant.
