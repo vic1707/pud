@@ -193,7 +193,8 @@ Settings may be comma-separated or split across multiple `#[pud(...)]` attribute
 
 ##### `attrs(...)`
 
-Applies attributes to the generated Pud variant for that field.
+Applies attributes to the generated Pud variant.
+_Note_: `cfg`/`cfg_attr` attributes found there will also be applied to the match arm for that field.
 
 ```rs
 #[pud(attrs(cfg(feature = "unstable")))]

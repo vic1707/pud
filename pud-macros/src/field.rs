@@ -104,11 +104,19 @@ impl Field {
 	}
 
 	pub(crate) fn match_arm(&self) -> ::syn::Arm {
+		let attrs = self
+			.settings
+			.attrs
+			.iter()
+			.filter(|a| a.path().is_ident("cfg") || a.path().is_ident("cfg_attr"));
 		let name_as_var = &self.v_name;
 		let variant_ident = self.variant_ident();
 		let assignment = self.assignment();
 
-		::syn::parse_quote! { Self::#variant_ident ( #name_as_var ) => { #assignment; } }
+		::syn::parse_quote! {
+			#( #[ #attrs ] )*
+			Self::#variant_ident ( #name_as_var ) => { #assignment; }
+		}
 	}
 }
 
