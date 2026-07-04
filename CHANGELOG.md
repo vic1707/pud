@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [v1.1.1] - 2026-03-26
+
+- **Feature:** Apply `cfg`/`cfg_attr` to match arms when provided in `attrs()` at field level ([ab4a13fb](https://github.com/vic1707/pud/commit/ab4a13fb)).
+- **Feature:** Add struct-level `whole`/`whole = NAME` variant support ([fafd602e](https://github.com/vic1707/pud/commit/fafd602e)).
+
 ## [v1.1.0] - 2026-03-26
 
 - **Feature:** Add field-level `#[pud(attrs(...))]` support ([3f5b48c](https://github.com/vic1707/pud/commit/3f5b48c)).
