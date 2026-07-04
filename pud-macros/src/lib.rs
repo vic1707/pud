@@ -61,6 +61,7 @@ fn expand(
 		attrs: transparent_attrs,
 		phantom_attrs,
 		group_attrs,
+		whole,
 	} = Settings::try_from(Punctuated::<Argument, ::syn::Token![,]>::parse_terminated.parse(args)?)?;
 
 	let enum_name = rename.unwrap_or_else(|| ::quote::format_ident!("{}Pud", ident));
@@ -87,6 +88,13 @@ fn expand(
 			"`phantom_attrs` requires type generics.",
 		));
 	}
+	let whole_variant = whole.as_ref().map(|name| {
+		::quote::quote! { #name ( #ident #ty_generics ), }
+	});
+	let whole_arm = whole.as_ref().map(|name| {
+		::quote::quote! { Self::#name ( __whole ) => { *target = __whole; }, }
+	});
+
 	let phantom_variant = has_generics.then(|| {
 		let generic_idents = generics.params.iter().filter_map(|p| match *p {
 			syn::GenericParam::Type(ref ty) => Some(&ty.ident),
@@ -107,6 +115,7 @@ fn expand(
 		#pud_vis enum #enum_name #impl_generics #where_clause {
 			#( #variants ),*,
 			#( #groups_variants ),*
+			#whole_variant
 			#phantom_variant
 		}
 
@@ -117,6 +126,7 @@ fn expand(
 				match self {
 					#( #match_arms ),*
 					#( #groups_arms ),*
+					#whole_arm
 					#phantom_arm
 				}
 			}

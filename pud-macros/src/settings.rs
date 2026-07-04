@@ -14,6 +14,7 @@ pub struct Settings {
 	pub attrs: Vec<::syn::Meta>,
 	pub phantom_attrs: Vec<::syn::Meta>,
 	pub group_attrs: BTreeMap<::syn::Ident, Vec<::syn::Meta>>,
+	pub whole: Option<::syn::Ident>,
 }
 
 impl TryFrom<Punctuated<Argument, ::syn::Token![,]>> for Settings {
@@ -41,6 +42,7 @@ impl TryFrom<Punctuated<Argument, ::syn::Token![,]>> for Settings {
 						}
 					}
 				},
+				Argument::Whole(name) => args.whole = Some(name),
 			}
 		}
 		Ok(args)
@@ -53,6 +55,7 @@ pub enum Argument {
 	Attrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
 	PhantomAttrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
 	GroupAttrs(Punctuated<GroupAttrsEntry, ::syn::Token![,]>),
+	Whole(::syn::Ident),
 }
 
 impl Parse for Argument {
@@ -82,6 +85,15 @@ impl Parse for Argument {
 			"group_attrs" => {
 				let attrs = parse_parenthesized_list(input)?;
 				Self::GroupAttrs(attrs)
+			},
+			"whole" => {
+				let name = if input.peek(syn::Token![=]) {
+					input.parse::<::syn::Token![=]>()?;
+					input.parse()?
+				} else {
+					::syn::Ident::new("Whole", ident.span())
+				};
+				Self::Whole(name)
 			},
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};

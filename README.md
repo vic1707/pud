@@ -6,7 +6,6 @@
 [<img alt="lines" src="https://www.aschey.tech/tokei/github.com/vic1707/pud?label=&style=for-the-badge&logo=https://simpleicons.org/icons/rust.svg?logoAsLabel%3D1?category%3Dcode" height="20">](https://github.com/vic1707/pud)
 [<img alt="maintenance" src="https://img.shields.io/badge/maintenance-activly--developed-brightgreen.svg?style=for-the-badge" height="20">](https://github.com/vic1707/pud)
 
-
 `pud` is a procedural macro and trait system for generating typed, composable, no-std-friendly modifications (“puds”) for Rust structs.
 
 ---
@@ -129,17 +128,50 @@ Struct-level settings are provided inside the `#[pud(...)]` attribute.
 )]
 ```
 
-| Setting                 | Description                                          |
-| ----------------------- | ---------------------------------------------------- |
-| `vis = <visibility>`    | Visibility of the generated Pud enum                 |
-| `rename = <Ident>`      | Rename the generated Pud enum                        |
-| `attrs(...)`            | Attributes applied to the generated Pud enum         |
-| `phantom_attrs(...)`    | Attributes applied to the hidden `__` generic variant |
-| `group_attrs(...)`      | Attributes applied to generated group variants       |
+| Setting                     | Description                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| `vis = <visibility>`        | Visibility of the generated Pud enum                                                     |
+| `rename = <Ident>`          | Rename the generated Pud enum                                                            |
+| `attrs(...)`                | Attributes applied to the generated Pud enum                                             |
+| `phantom_attrs(...)`        | Attributes applied to the hidden `__` generic variant                                    |
+| `group_attrs(...)`          | Attributes applied to generated group variants                                           |
+| `whole` / `whole = <Ident>` | Generates a variant holding a full instance of the struct, replacing all fields on apply |
 
 ##### `phantom_attrs(...)`
 
 Applies attributes to the hidden `__` variant that is generated when the Pud enum has type generics.
+
+##### `whole` / `whole = Ident`
+
+Generates a variant that holds a full instance of the struct and replaces all fields atomically on apply.
+
+```rs
+#[pud(whole)]
+struct Foo { a: u8, b: u16 }
+```
+
+Generates:
+
+```rs
+enum FooPud {
+    A(u8),
+    B(u16),
+    Whole(Foo),  // replaces both fields at once
+}
+```
+
+```rs
+// Usage
+foo.apply(FooPud::Whole(Foo { a: 1, b: 2 }));
+```
+
+The variant name defaults to `Whole` and can be customized:
+
+```rs
+#[pud(whole = Replace)]
+struct Bar { x: String, y: bool }
+// generates BarPud::Replace(Bar)
+```
 
 ##### `group_attrs(NAME(...), OTHER(...))`
 
