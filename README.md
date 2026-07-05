@@ -216,6 +216,17 @@ Generates
 FooPud::FOO(u8) // instead of FooPud::foo(u8)
 ```
 
+##### `skip`
+
+Excludes a field from its generated solo Pud variant. Group variants still include it.
+
+Cannot be combined with `rename` or `attrs`, since those only affect the skipped solo variant.
+
+```rs
+#[pud(skip)]
+secret: String,
+```
+
 ##### `map(Type >>= expr)`
 
 Allows you to use a mapper instead of the field type, mapper can be a function path or a closure expression (`Fn(Type) -> field_type`)

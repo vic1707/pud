@@ -25,7 +25,7 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 		let args = Settings::try_from(field.attrs.as_slice())?;
 		let member = field.ident.clone().map_or_else(|| idx.into(), Into::into);
 
-		if matches!(member, ::syn::Member::Unnamed(_)) && args.rename.is_none() {
+		if !args.skip && matches!(member, ::syn::Member::Unnamed(_)) && args.rename.is_none() {
 			return Err(::syn::Error::new_spanned(
 				&field,
 				"Unnamed fields must have a `#[pud(rename = Name)]`.",
@@ -36,6 +36,13 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 			return Err(::syn::Error::new_spanned(
 				&field,
 				"Use either `map` or `flatten`, not both.",
+			));
+		}
+
+		if args.skip && (args.rename.is_some() || !args.attrs.is_empty()) {
+			return Err(::syn::Error::new_spanned(
+				&field,
+				"`rename` and `attrs` have no effect with `skip`.",
 			));
 		}
 
@@ -59,6 +66,10 @@ impl Field {
 
 	pub(crate) const fn v_name(&self) -> &::syn::Ident {
 		&self.v_name
+	}
+
+	pub(crate) const fn is_skipped(&self) -> bool {
+		self.settings.skip
 	}
 
 	pub(crate) fn variant_ident(&self) -> ::syn::Ident {
@@ -127,6 +138,7 @@ pub struct Settings {
 	flatten: Option<::syn::Type>,
 	groups: Vec<::syn::Ident>,
 	map: Option<(::syn::Type, utils::CustomFunction)>,
+	skip: bool,
 }
 
 impl TryFrom<&[::syn::Attribute]> for Settings {
@@ -144,6 +156,7 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 						Argument::Flatten(from) => args.flatten = Some(from),
 						Argument::Group(group) => args.groups.push(group),
 						Argument::Map(map) => args.map = Some(map),
+						Argument::Skip => args.skip = true,
 					}
 				}
 			}
@@ -159,6 +172,7 @@ pub enum Argument {
 	Group(::syn::Ident),
 	Flatten(::syn::Type),
 	Map((::syn::Type, utils::CustomFunction)),
+	Skip,
 }
 
 impl Parse for Argument {
@@ -193,6 +207,7 @@ impl Parse for Argument {
 				let func = inner.parse()?;
 				Self::Map((ty, func))
 			},
+			"skip" => Self::Skip,
 			_ => return Err(::syn::Error::new_spanned(ident, "Unknown argument.")),
 		};
 		Ok(arg)

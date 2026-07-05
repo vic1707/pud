@@ -1,0 +1,6 @@
+error: `rename` and `attrs` have no effect with `skip`.
+ --> tests/ui/fail/skip_ignored_attrs.rs:5:2
+  |
+5 | /     #[pud(skip, rename = B)]
+6 | |     b: u8,
+  | |_________^

@@ -73,8 +73,10 @@ fn expand(
 		.map(Field::try_from)
 		.collect::<::syn::Result<_>>()?;
 
-	let variants = fields_and_types.iter().map(Field::to_variant);
-	let match_arms = fields_and_types.iter().map(Field::match_arm);
+	let solo_fields = || fields_and_types.iter().filter(|field| !field.is_skipped());
+
+	let variants = solo_fields().map(Field::to_variant);
+	let match_arms = solo_fields().map(Field::match_arm);
 
 	let groups = FieldGroups::try_from_fields_and_attrs(&fields_and_types, group_attrs)?;
 	let groups_variants = groups.variants();
