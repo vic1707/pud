@@ -2,7 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
-## [v1.1.1] - 2026-03-26
+## [v1.1.2] - 2026-07-05
+
+- **Feature:** Add `skip` field level attribute ([84e374ee](https://github.com/vic1707/pud/commit/84e374ee)).
+
+## [v1.1.1] - 2026-07-04
 
 - **Feature:** Apply `cfg`/`cfg_attr` to match arms when provided in `attrs()` at field level ([ab4a13fb](https://github.com/vic1707/pud/commit/ab4a13fb)).
 - **Feature:** Add struct-level `whole`/`whole = NAME` variant support ([fafd602e](https://github.com/vic1707/pud/commit/fafd602e)).
