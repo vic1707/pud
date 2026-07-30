@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [v2.0.0] - 2026-07-30
+
+- **Chore:** Update deps + syn v3
+- **Breaking:** Replace field-level `attrs(...)` with explicit `variant_attrs(...)` and `arm_attrs(...)` settings ([fbb7a295](https://github.com/vic1707/pud/commit/fbb7a295)).
+
 ## [v1.1.2] - 2026-07-05
 
 - **Feature:** Add `skip` field level attribute ([84e374ee](https://github.com/vic1707/pud/commit/84e374ee)).
