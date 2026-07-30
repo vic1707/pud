@@ -39,10 +39,14 @@ impl TryFrom<(usize, ::syn::Field)> for Field {
 			));
 		}
 
-		if args.skip && (args.rename.is_some() || !args.attrs.is_empty()) {
+		if args.skip
+			&& (args.rename.is_some()
+				|| !args.variant_attrs.is_empty()
+				|| !args.arm_attrs.is_empty())
+		{
 			return Err(::syn::Error::new_spanned(
 				&field,
-				"`rename` and `attrs` have no effect with `skip`.",
+				"`rename`, `variant_attrs`, and `arm_attrs` have no effect with `skip`.",
 			));
 		}
 
@@ -83,7 +87,7 @@ impl Field {
 	}
 
 	pub(crate) fn to_variant(&self) -> ::syn::Variant {
-		let attrs = &self.settings.attrs;
+		let attrs = &self.settings.variant_attrs;
 		let variant_ident = self.variant_ident();
 
 		let variant_ty = self
@@ -115,11 +119,7 @@ impl Field {
 	}
 
 	pub(crate) fn match_arm(&self) -> ::syn::Arm {
-		let attrs = self
-			.settings
-			.attrs
-			.iter()
-			.filter(|a| a.path().is_ident("cfg") || a.path().is_ident("cfg_attr"));
+		let attrs = &self.settings.arm_attrs;
 		let name_as_var = &self.v_name;
 		let variant_ident = self.variant_ident();
 		let assignment = self.assignment();
@@ -134,7 +134,8 @@ impl Field {
 #[derive(Default)]
 pub struct Settings {
 	rename: Option<::syn::Ident>,
-	attrs: Vec<::syn::Meta>,
+	variant_attrs: Vec<::syn::Meta>,
+	arm_attrs: Vec<::syn::Meta>,
 	flatten: Option<::syn::Type>,
 	groups: Vec<::syn::Ident>,
 	map: Option<(::syn::Type, utils::CustomFunction)>,
@@ -152,7 +153,8 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 				for arg in parse_pud_attr.parse2(attr.meta.to_token_stream())? {
 					match arg {
 						Argument::Rename(new_name) => args.rename = Some(new_name),
-						Argument::Attrs(metas) => args.attrs.extend(metas),
+						Argument::VariantAttrs(metas) => args.variant_attrs.extend(metas),
+						Argument::ArmAttrs(metas) => args.arm_attrs.extend(metas),
 						Argument::Flatten(from) => args.flatten = Some(from),
 						Argument::Group(group) => args.groups.push(group),
 						Argument::Map(map) => args.map = Some(map),
@@ -168,7 +170,8 @@ impl TryFrom<&[::syn::Attribute]> for Settings {
 
 pub enum Argument {
 	Rename(::syn::Ident),
-	Attrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
+	VariantAttrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
+	ArmAttrs(Punctuated<::syn::Meta, ::syn::Token![,]>),
 	Group(::syn::Ident),
 	Flatten(::syn::Type),
 	Map((::syn::Type, utils::CustomFunction)),
@@ -186,9 +189,13 @@ impl Parse for Argument {
 				let new_name = input.parse()?;
 				Self::Rename(new_name)
 			},
-			"attrs" => {
+			"variant_attrs" => {
 				let attrs = utils::parse_parenthesized_list(input)?;
-				Self::Attrs(attrs)
+				Self::VariantAttrs(attrs)
+			},
+			"arm_attrs" => {
+				let attrs = utils::parse_parenthesized_list(input)?;
+				Self::ArmAttrs(attrs)
 			},
 			"group" => {
 				input.parse::<::syn::Token![=]>()?;

@@ -191,14 +191,20 @@ Field settings control how individual fields participate in the Pud enum and how
 
 Settings may be comma-separated or split across multiple `#[pud(...)]` attributes.
 
-##### `attrs(...)`
+##### `variant_attrs(...)` / `arm_attrs(...)`
 
-Applies attributes to the generated Pud variant.
-_Note_: `cfg`/`cfg_attr` attributes found there will also be applied to the match arm for that field.
+Applies attributes to the generated Pud variant or its match arm, respectively. Attributes that
+control whether a variant exists must be applied to both explicitly.
 
 ```rs
-#[pud(attrs(cfg(feature = "unstable")))]
+#[pud(
+    variant_attrs(cfg(feature = "unstable")),
+    arm_attrs(cfg(feature = "unstable")),
+)]
 foo: u8,
+
+#[pud(variant_attrs(cfg_attr(feature = "defmt", defmt(Debug2Format))))]
+bar: u8,
 ```
 
 ##### `rename = Ident`
@@ -220,7 +226,8 @@ FooPud::FOO(u8) // instead of FooPud::foo(u8)
 
 Excludes a field from its generated solo Pud variant. Group variants still include it.
 
-Cannot be combined with `rename` or `attrs`, since those only affect the skipped solo variant.
+Cannot be combined with `rename`, `variant_attrs`, or `arm_attrs`, since those only affect the
+skipped solo variant and match arm.
 
 ```rs
 #[pud(skip)]
